@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#002b5c">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AZM-LKO Express Booking</title>
+    
+    <style>
+        :root { --primary: #002b5c; --secondary: #25D366; --accent: #ff9800; --bg: #f2f5f8; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: var(--bg); color: #333; padding-bottom: 120px; }
+
+        .header { background: var(--primary); color: white; padding: 15px 20px 45px; text-align: center; border-radius: 0 0 40px 40px; }
+        .header h1 { margin: 0; font-size: 24px; }
+        
+        .container { padding: 0 15px; max-width: 480px; margin: auto; }
+
+        .search-box { background: white; padding: 20px; border-radius: 20px; margin-top: -30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { font-size: 11px; color: #888; font-weight: bold; display: block; margin-bottom: 5px; }
+        .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; outline: none; font-size: 15px; background: #fff; }
+
+        .section-title { margin: 20px 0 10px; font-size: 16px; font-weight: bold; color: var(--primary); }
+        .card { background: white; border-radius: 15px; padding: 12px 15px; margin-bottom: 10px; display: flex; align-items: center; border: 2px solid transparent; cursor: pointer; }
+        .card.active { border-color: var(--accent); background: #fffcf5; }
+        .card-info { flex: 1; font-size: 14px; }
+        .card-price-input { width: 90px; padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-weight: bold; text-align: center; }
+
+        /* Highlighted Send To Box */
+        .send-to-box { background: #fff0d4; padding: 15px; border-radius: 15px; margin-top: 15px; border: 2px dashed #ff9800; }
+        .send-to-box input { border: 2px solid #ff9800 !important; font-weight: bold; color: #d35400; }
+
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); z-index: 1000; }
+        .btn-confirm { background: var(--secondary); color: white; border: none; width: 100%; padding: 16px; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>BookGadi.com</h1>
+        <p>Booking Note Generator</p>
+    </div>
+
+    <div class="container">
+        <div class="search-box">
+            <div style="display: flex; gap: 10px;">
+                <div class="input-group" style="flex: 1;">
+                    <label>CUSTOMER NAME</label>
+                    <input type="text" id="custName" placeholder="Name">
+                </div>
+                <div class="input-group" style="flex: 1;">
+                    <label>CUSTOMER MOBILE</label>
+                    <input type="tel" id="custMobile" placeholder="Cust No">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>KAHAN SE (PICKUP)</label>
+                <input type="text" id="pickup" placeholder="Pickup City">
+            </div>
+            <div class="input-group">
+                <label>KAHAN TAK (DROP)</label>
+                <input type="text" id="drop" placeholder="Drop Destination">
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <div class="input-group" style="flex: 1.5;">
+                    <label>TARIKH (DATE)</label>
+                    <input type="date" id="travelDate">
+                </div>
+                <div class="input-group" style="flex: 1;">
+                    <label>SAMAY (TIME)</label>
+                    <input type="time" id="travelTime">
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">SERVICE & AMOUNT</div>
+
+        <div class="card active" onclick="updateService('Shared Seat', 'shared', this)">
+            <div class="card-info"><strong>Shared Seat</strong></div>
+            <input type="number" class="card-price-input" id="p_shared" placeholder="₹" onclick="event.stopPropagation()">
+        </div>
+
+        <div class="card" onclick="updateService('One Way Full', 'oneway', this)">
+            <div class="card-info"><strong>One Way Full</strong></div>
+            <input type="number" class="card-price-input" id="p_oneway" placeholder="₹" onclick="event.stopPropagation()">
+        </div>
+
+        <div class="card" onclick="updateService('Round Trip', 'round', this)">
+            <div class="card-info"><strong>Round Trip</strong></div>
+            <input type="number" class="card-price-input" id="p_round" placeholder="₹" onclick="event.stopPropagation()">
+        </div>
+
+        <div class="card" onclick="updateService('Airport Transfer', 'airport', this)">
+            <div class="card-info"><strong>Airport Transfer</strong></div>
+            <input type="number" class="card-price-input" id="p_airport" placeholder="₹" onclick="event.stopPropagation()">
+        </div>
+
+        <div class="send-to-box">
+            <div class="input-group" style="margin-bottom: 0;">
+                <label style="color: #d35400;">MESSAGED SEND TO (ADMIN/DRIVER NO.)</label>
+                <input type="tel" id="targetWhatsApp" placeholder="Enter 10 digit number" value="9651191446">
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <button class="btn-confirm" onclick="sendNow()">SEND TO WHATSAPP</button>
+    </div>
+
+    <script>
+        let selectedService = "Shared Seat", serviceType = 'shared';
+
+        function updateService(name, type, el) {
+            selectedService = name; 
+            serviceType = type;
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function sendNow() {
+            // Number check
+            const rawNumber = document.getElementById('targetWhatsApp').value.trim();
+            if(!rawNumber || rawNumber.length < 10) {
+                alert("Kripya sahi WhatsApp number dalein!");
+                return;
+            }
+
+            // Data lena
+            const custName = document.getElementById('custName').value;
+            const custMobile = document.getElementById('custMobile').value;
+            const pickup = document.getElementById('pickup').value;
+            const drop = document.getElementById('drop').value;
+            const date = document.getElementById('travelDate').value;
+            const time = document.getElementById('travelTime').value;
+            const amount = document.getElementById('p_' + serviceType).value;
+
+            if(!custName || !amount) { alert("Sari details bharein!"); return; }
+
+            // Message format
+            let msg = `*BOOKING NOTE*%0A-----------------------%0A`;
+            msg += `👤 *Customer:* ${custName}%0A`;
+            msg += `📞 *Customer No:* ${custMobile}%0A`;
+            msg += `📍 *Route:* ${pickup} to ${drop}%0A`;
+            msg += `📅 *Date:* ${date}%0A`;
+            msg += `⏰ *Time:* ${time}%0A`;
+            msg += `💰 *Amount:* ₹${amount}%0A`;
+            msg += `✅ *Service:* ${selectedService}%0A`;
+            msg += `-----------------------%0A`;
+            msg += `*BookGadi.com*`;
+
+            // Redirect to entered number
+            const finalUrl = "https://api.whatsapp.com/send?phone=91" + rawNumber + "&text=" + msg;
+            window.location.href = finalUrl;
+        }
+    </script>
+</body>
+</html>
